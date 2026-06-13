@@ -39,12 +39,12 @@ class Database:
                 );
             """)
             await conn.execute("""
-                CREATE TABLE IF NOT EXISTS cart (
-                    cart_id SERIAL PRIMARY KEY,
+                CREATE TABLE IF NOT EXISTS orders (
+                    order_id SERIAL PRIMARY KEY,
                     user_id BIGINT NOT NULL,
-                    product_id INTEGER,
-                    quantity INTEGER DEFAULT 1,
-                    UNIQUE(user_id, product_id)
+                    products_text TEXT NOT NULL,
+                    total_price REAL NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 );
             """)
             await conn.execute("""

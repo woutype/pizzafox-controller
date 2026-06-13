@@ -1,4 +1,5 @@
 import asyncio
+from itertools import product
 
 import aiohttp
 
