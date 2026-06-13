@@ -49,8 +49,13 @@ async def show_cart(message: Message, db):
 
 
 @cart_router.callback_query(F.data.startswith("edit_"))
-async def ask_delete(callback: CallbackQuery):
-    product_id = callback.data.split("_")[1]
+async def show_cart_callback(callback: CallbackQuery):
+    data = callback.data.split("_")
+    if len(data) < 2 or not data[1].isdigit():
+        await callback.answer("Ошибка данных!")
+        return
+
+    product_id = int(data[1])
     builder = InlineKeyboardBuilder()
 
     builder.button(text="🗑 Удалить товар", callback_data=f"DelCard_{product_id}")

@@ -11,6 +11,7 @@ from databases.products import check_all_products
 
 dp = Dispatcher()
 
+
 async def handle_ping(request):
     return web.Response(text="The Bot is working! Everything’s great!", status=200)
 
@@ -27,19 +28,15 @@ async def start_web_server():
     print(f"Web-server started on port {port}")
 
 
-async def update():
-    asyncio.create_task(check_all_products())
-
 async def main():
     bot = Bot(token=config.bot_token)
     await start_web_server()
+    db = Database()
+    await db.connect()
     dp.include_router(main_router)
     dp.include_router(menu_router)
     dp.include_router(cart_router)
-    dp.startup.register(update)
-
-    db = Database()
-    await db.connect()
+    asyncio.create_task(check_all_products(db))
 
     if config.admin_id:
         try:

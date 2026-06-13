@@ -40,7 +40,7 @@ class Database:
             """)
             await conn.execute("""
                 CREATE TABLE IF NOT EXISTS cart (
-                    card_id SERIAL PRIMARY KEY,
+                    cart_id SERIAL PRIMARY KEY,
                     user_id BIGINT NOT NULL,
                     product_id INTEGER,
                     quantity INTEGER DEFAULT 1,
@@ -48,14 +48,12 @@ class Database:
                 );
             """)
             await conn.execute("""
-                CREATE TABLE IF NOT EXISTS orders (
-                    order_id SERIAL PRIMARY KEY,
-                    user_id BIGINT NOT NULL,
-                    products_text TEXT NOT NULL,
-                    total_price REAL NOT NULL,
-                    status TEXT DEFAULT 'new',
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
+                CREATE TABLE IF NOT EXISTS cart (
+                    cart_id SERIAL PRIMARY KEY,
+                    user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+                    product_id INTEGER NOT NULL REFERENCES products(product_id) ON DELETE CASCADE,
+                    quantity INTEGER DEFAULT 1
+                );
             """)
 
     async def add_product(self, product_id, title, price, description, image_url, category):
@@ -90,12 +88,11 @@ class Database:
 
     async def add_user(self, user_id, username, first_name):
         async with self.pool.acquire() as conn:
-            query = """
-                INSERT INTO users (user_id, username, first_name)
+            await conn.execute("""
+                INSERT INTO users (user_id, username, first_name) 
                 VALUES ($1, $2, $3)
                 ON CONFLICT (user_id) DO NOTHING;
-            """
-            await conn.execute(query, user_id, username, first_name)
+            """, user_id, username, first_name)
 
     async def get_products_by_category(self, category):
         async with self.pool.acquire() as conn:
@@ -171,7 +168,7 @@ class Database:
             """
             return await conn.fetchrow(query, int(user_id))
 
-    async def add_total_price_and_order(self, user_id: int, price: float):
+    async def add_total_price_and_order(self, price, user_id):
         async with self.pool.acquire() as conn:
 
             query = """

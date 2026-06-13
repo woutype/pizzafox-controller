@@ -50,12 +50,15 @@ async def show_profile(message: Message, db):
         await message.answer("❌ Профиль не найден. Напишите /start")
         return
 
-    profile_text = (
-        "🦊 <b>Ваш профиль PizzaFox</b>\n\n"
-        f"👤 <b>Имя:</b> {user['first_name']}\n"
-        f"🆔 <b>Ваш ID:</b> {message.from_user.id}\n"
-        f"📊 <b>Заказов:</b> {user['total_orders']} шт.\n"
-        f"💰 <b>Потрачено:</b> {user['total_spent']:.2f} BYN"
-    )
+    # Получаем данные с дефолтными значениями, если база вернула None
+    name = user['first_name'] or "Гость"
+    total_orders = user['total_orders'] or 0
+    total_spent = user['total_spent'] or 0.0
 
-    await message.answer(text=profile_text, parse_mode="HTML")
+    profile_text = (
+        f"👤 <b>Ваш профиль:</b>\n\n"
+        f"Имя: {name}\n"
+        f"Количество заказов: {total_orders}\n"
+        f"Потрачено: {total_spent:.2f} BYN"
+    )
+    await message.answer(profile_text, parse_mode="HTML")

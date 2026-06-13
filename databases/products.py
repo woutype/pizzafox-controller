@@ -1,16 +1,11 @@
 import asyncio
-from os import times
 
 import aiohttp
-from databases.init_db import Database
 
 url_drinks = "https://pzz.by/api/v1/drinks?filter=pizzeria_type:pizzeria,is_alcoholic:0&order=position:asc"
 url_desserts = "https://pzz.by/api/v1/desserts?filter=pizzeria_type:pizzeria&order=position:asc"
 url_snacks = "https://pzz.by/api/v1/snacks?load=modifications&filter=meal_only:0,parent_id:is:null&order=position:asc"
 url_pizza = "https://pzz.by/api/v1/pizzas?load=ingredients,modifications,filters&filter=meal_only:0,parent_id:is:null&order=position:asc"
-
-
-db = Database()
 
 
 async def get_data(url):
@@ -22,7 +17,7 @@ async def get_data(url):
                 return await resp.json()
 
 
-async def get_drinks():
+async def get_drinks(db):
     drinks_json = await get_data(url_drinks)
     drinks_data = drinks_json["response"]["data"]
 
@@ -38,7 +33,7 @@ async def get_drinks():
     print("✅ Напитки загружены!")
 
 
-async def get_desserts():
+async def get_desserts(db):
     desserts_json = await get_data(url_desserts)
     desserts_data = desserts_json["response"]["data"]
 
@@ -54,7 +49,7 @@ async def get_desserts():
     print("✅ Десерты загружены!")
 
 
-async def get_snacks():
+async def get_snacks(db):
     snacks_json = await get_data(url_snacks)
     snacks_data = snacks_json["response"]["data"]
 
@@ -70,7 +65,7 @@ async def get_snacks():
     print("✅ Закуски загружены!")
 
 
-async def get_pizza():
+async def get_pizza(db):
     pizza_json = await get_data(url_pizza)
     pizza_data = pizza_json["response"]["data"]
 
@@ -85,7 +80,8 @@ async def get_pizza():
         await db.add_product(product_id, title, price, description, image_url, category)
     print("✅ Пиццы загружены!")
 
-async def check_all_products():
+
+async def check_all_products(db):
     num = 60 * 60 * 24
     while True:
         await asyncio.sleep(num)
