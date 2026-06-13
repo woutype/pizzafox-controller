@@ -52,7 +52,8 @@ class Database:
                     cart_id SERIAL PRIMARY KEY,
                     user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
                     product_id INTEGER NOT NULL REFERENCES products(product_id) ON DELETE CASCADE,
-                    quantity INTEGER DEFAULT 1
+                    quantity INTEGER DEFAULT 1,
+                    UNIQUE(user_id, product_id)
                 );
             """)
 
