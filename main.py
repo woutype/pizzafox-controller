@@ -20,7 +20,6 @@ async def start_web_server():
     app = web.Application()
     app.router.add_get("/", handle_ping)
     port = int(os.getenv("PORT", 8080))
-
     runner = web.AppRunner(app)
     await runner.setup()
     site = web.TCPSite(runner, "0.0.0.0", port)
@@ -29,19 +28,17 @@ async def start_web_server():
 
 
 async def main():
-    bot = Bot(token=config.bot_token)
     await start_web_server()
+    bot = Bot(token=config.bot_token)
     db = Database()
     await db.connect()
     dp.include_router(main_router)
     dp.include_router(menu_router)
     dp.include_router(cart_router)
     asyncio.create_task(check_all_products(db))
-
     if config.admin_id:
         try:
-            await bot.send_message(chat_id=config.admin_id, text="Bot launched successfully!\n\n"
-                                                                 "/start")
+            await bot.send_message(chat_id=config.admin_id, text="Bot launched /start")
         except Exception as e:
             print(f"Failed to send startup message to admin: {e}")
 

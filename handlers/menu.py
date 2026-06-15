@@ -24,7 +24,14 @@ async def get_inline_category():
 
 
 @menu_router.message(F.text == "🍕 Смотреть меню")
-async def menu(message: Message):
+async def menu(message: Message, db):
+
+    user = await db.get_user(message.from_user.id)
+    if user:
+        pass
+    else:
+        await db.add_user(message.from_user.id, message.from_user.username, message.from_user.first_name)
+
     await message.answer(
         "Выбери интересующую категорию из меню ниже: 👇",
         reply_markup=await get_inline_category()

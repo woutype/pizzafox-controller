@@ -1,6 +1,4 @@
 import asyncio
-from itertools import product
-
 import aiohttp
 
 url_drinks = "https://pzz.by/api/v1/drinks?filter=pizzeria_type:pizzeria,is_alcoholic:0&order=position:asc"
@@ -85,11 +83,10 @@ async def get_pizza(db):
 async def check_all_products(db):
     num = 60 * 60 * 24
     while True:
-        await asyncio.sleep(num)
-        await db.connect()
         print("Начинаем заполнение базы данных...")
         await get_pizza(db)
         await get_desserts(db)
         await get_drinks(db)
         await get_snacks(db)
         print("\n🎉 Все категории успешно импортированы в PostgreSQL!")
+        await asyncio.sleep(num)

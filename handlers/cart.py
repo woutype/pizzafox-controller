@@ -28,6 +28,13 @@ async def show_cart_callback(callback: CallbackQuery, db):
 
 @cart_router.message(F.text == "🧺 Корзина")
 async def show_cart(message: Message, db):
+
+    user = await db.get_user(message.from_user.id)
+    if user:
+        pass
+    else:
+        await db.add_user(message.from_user.id, message.from_user.username, message.from_user.first_name)
+
     items = await db.get_items_in_cart(message.from_user.id)
     if not items:
         await message.answer("🛒 Корзина пуста", show_alert=True)

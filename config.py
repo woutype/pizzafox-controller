@@ -10,7 +10,6 @@ class Config:
     bot_token: str
     admin_id: int
     user: str
-    db_location: str
     password: str
     host: str
     database: str
@@ -20,7 +19,6 @@ class Config:
 def load_config():
     bot_token = os.getenv("BOT_TOKEN")
     admin_id = os.getenv("ADMIN_ID")
-    db_location = os.getenv("DB_LOCATION")
     user = os.getenv("DB_USER")
     password = os.getenv("DB_PASSWORD")
     host = os.getenv("DB_HOST")
@@ -31,8 +29,6 @@ def load_config():
         raise ValueError("Переменная BOT_TOKEN не найдена в файле .env")
     if not admin_id:
         raise ValueError("Переменная ADMIN_ID не найдена в файле .env")
-    if not db_location:
-        raise ValueError("Переменная DB_LOCATION не найдена в файле .env")
     if not user:
         raise ValueError("Переменная DB_USER не найдена в файле .env")
     if not password:
@@ -42,7 +38,14 @@ def load_config():
     if not database:
         raise ValueError("Переменная DB_DATABASE не найдена в файле .env")
 
-    return Config(bot_token=bot_token, admin_id=int(admin_id), db_location=db_location, user=user, password=password, host=host, database=database, port=int(port))
+    return Config(
+        bot_token=bot_token,
+        admin_id=int(admin_id),
+        user=user,
+        password=password,
+        host=host,
+        database=database,
+        port=int(port))
 
 
 config = load_config()

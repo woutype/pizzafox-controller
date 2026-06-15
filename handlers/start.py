@@ -44,13 +44,13 @@ async def start(message: Message, db):
 
 @main_router.message(F.text == "👤 Профиль")
 async def show_profile(message: Message, db):
-    user = await db.get_simple_user(message.from_user.id)
 
-    if not user:
-        await message.answer("❌ Профиль не найден. Напишите /start")
-        return
+    user = await db.get_user(message.from_user.id)
+    if user:
+        pass
+    else:
+        await db.add_user(message.from_user.id, message.from_user.username, message.from_user.first_name)
 
-    # Получаем данные с дефолтными значениями, если база вернула None
     name = user['first_name'] or "Гость"
     total_orders = user['total_orders'] or 0
     total_spent = user['total_spent'] or 0.0

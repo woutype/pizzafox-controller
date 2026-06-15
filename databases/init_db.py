@@ -72,6 +72,8 @@ class Database:
             """
             await conn.execute(query, product_id, title, price, description, image_url, category)
 
+        await conn.execute("DELETE FROM products WHERE product_id = $1 AND price < 0.1;", product_id)
+
     async def get_products(self, product_id):
         async with self.pool.acquire() as conn:
             query = """
@@ -80,12 +82,12 @@ class Database:
             """
             return await conn.fetchrow(query, product_id)
 
-    async def get_user(self, user_id):
+    async def get_products_by_category(self, category):
         async with self.pool.acquire() as conn:
             query = """
-                SELECT username, first_name, total_orders, total_spent FROM users WHERE user_id = $1;
+                SELECT product_id, title, price, description, image_url, category FROM products WHERE category = $1;
             """
-            return await conn.fetchrow(query, int(user_id))
+            return await conn.fetch(query, category)
 
     async def add_user(self, user_id, username, first_name):
         async with self.pool.acquire() as conn:
@@ -95,12 +97,12 @@ class Database:
                 ON CONFLICT (user_id) DO NOTHING;
             """, user_id, username, first_name)
 
-    async def get_products_by_category(self, category):
+    async def get_user(self, user_id):
         async with self.pool.acquire() as conn:
             query = """
-                SELECT product_id, title, price, description, image_url, category FROM products WHERE category = $1;
+                SELECT username, first_name, total_orders, total_spent FROM users WHERE user_id = $1;
             """
-            return await conn.fetch(query, category)
+            return await conn.fetchrow(query, int(user_id))
 
     async def add_to_cart(self, user_id, product_id):
         async with self.pool.acquire() as conn:
@@ -150,6 +152,9 @@ class Database:
             """
             await conn.execute(query, int(user_id), int(product_id))
 
+    async def clear_cart(self, user_id):
+        async with self.pool.acquire() as conn:
+            await conn.execute("DELETE FROM cart WHERE user_id = $1;", int(user_id))
 
     async def add_order(self, user_id, product_text, total_price):
         async with self.pool.acquire() as conn:
@@ -158,25 +163,12 @@ class Database:
             """
             await conn.execute(query, user_id, product_text, total_price)
 
-    async def clear_cart(self, user_id):
-        async with self.pool.acquire() as conn:
-            await conn.execute("DELETE FROM cart WHERE user_id = $1;", int(user_id))
-
-    async def get_simple_user(self, user_id: int):
-        async with self.pool.acquire() as conn:
-            query = """
-                SELECT first_name, total_orders, total_spent FROM users WHERE user_id = $1
-            """
-            return await conn.fetchrow(query, int(user_id))
-
     async def add_total_price_and_order(self, price, user_id):
         async with self.pool.acquire() as conn:
-
             query = """
                 UPDATE users SET 
                     total_spent = total_spent + $1,
                     total_orders = total_orders + 1
                 WHERE user_id = $2;
             """
-
             await conn.execute(query, float(price), int(user_id))
