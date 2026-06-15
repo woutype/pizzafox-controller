@@ -1,7 +1,9 @@
-from aiogram.types import CallbackQuery, Message
-from aiogram import F, Router, Bot
-from aiogram.utils.keyboard import InlineKeyboardBuilder, InlineKeyboardMarkup
+import os.path
 
+from aiogram.types import CallbackQuery, Message, FSInputFile
+from aiogram import F, Router, Bot
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+from handlers.pdf_creator import generate_pdf
 from config import config
 
 cart_router = Router()
@@ -123,7 +125,6 @@ def calculate_cart_total(items):
 async def accept_order(callback: CallbackQuery, db, bot: Bot):
     user_id = callback.from_user.id
     items = await db.get_items_in_cart(user_id)
-
     total_price, products_text = calculate_cart_total(items)
 
     await db.add_order(user_id, products_text, total_price)
@@ -139,6 +140,17 @@ async def accept_order(callback: CallbackQuery, db, bot: Bot):
 
     await callback.message.edit_text(text=success_text, parse_mode="HTML")
     await callback.answer("Заказ подтвержден!")
+
+    try:
+        pdf_file = generate_pdf(callback.from_user.id, items, total_price)
+        document = FSInputFile(pdf_file)
+        await callback.message.reply_document(document=document, caption="🧾 Ваш электронный чек")
+
+        if os.path.exists(pdf_file):
+            os.remove(pdf_file)
+
+    except Exception as e:
+        print(f"Ошибка при генерации или отправке PDF: {e}")
 
     username = f"@{callback.from_user.username}" if callback.from_user.username else "Нет юзернейма"
     admin_send = (
@@ -158,4 +170,4 @@ async def accept_order(callback: CallbackQuery, db, bot: Bot):
 async def add_to_cart(callback: CallbackQuery, db):
     product_id = callback.data.split("_")[1]
     await db.add_to_cart(callback.from_user.id, product_id)
-    await callback.answer("🎉 Товар успешно добавлен!", show_alert=True)
+    await callback.answer("🎉 Товар успешно добавлен!")
