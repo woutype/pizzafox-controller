@@ -45,7 +45,7 @@ async def show_cart(message: Message, db):
 
     for item in items:
         builder.button(
-            text=f"❌ {item['title']}",
+            text=f"❌ {item['title']} - {item['quantity']}",
             callback_data=f"edit_{item['product_id']}"
         )
 
