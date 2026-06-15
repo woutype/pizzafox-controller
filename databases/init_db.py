@@ -72,7 +72,7 @@ class Database:
             """
             await conn.execute(query, product_id, title, price, description, image_url, category)
 
-        await conn.execute("DELETE FROM products WHERE product_id = $1 AND price < 0.1;", product_id)
+            await conn.execute("DELETE FROM products WHERE product_id = $1 AND price < 0.1;", product_id)
 
     async def get_products(self, product_id):
         async with self.pool.acquire() as conn:
