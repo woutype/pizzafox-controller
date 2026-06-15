@@ -24,7 +24,7 @@ class Database:
                     username TEXT,
                     first_name TEXT,
                     total_orders INTEGER DEFAULT 0,
-                    total_spent REAL DEFAULT 0
+                    total_spent NUMERIC(10, 2) DEFAULT 0
                 );
             """)
             await conn.execute("""
@@ -32,7 +32,7 @@ class Database:
                     id SERIAL PRIMARY KEY,
                     product_id INTEGER UNIQUE,
                     title TEXT,
-                    price REAL,
+                    price NUMERIC(10, 2),
                     description TEXT,
                     image_url TEXT,
                     category TEXT
@@ -43,7 +43,7 @@ class Database:
                     order_id SERIAL PRIMARY KEY,
                     user_id BIGINT NOT NULL,
                     products_text TEXT NOT NULL,
-                    total_price REAL NOT NULL,
+                    total_price NUMERIC(10, 2) NOT NULL,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 );
             """)
