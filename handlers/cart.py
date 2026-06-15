@@ -1,6 +1,6 @@
 from aiogram.types import CallbackQuery, Message
 from aiogram import F, Router, Bot
-from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiogram.utils.keyboard import InlineKeyboardBuilder, InlineKeyboardMarkup
 
 from config import config
 
@@ -28,7 +28,6 @@ async def show_cart_callback(callback: CallbackQuery, db):
 
 @cart_router.message(F.text == "🧺 Корзина")
 async def show_cart(message: Message, db):
-
     user = await db.get_user(message.from_user.id)
     if user:
         pass
@@ -37,10 +36,11 @@ async def show_cart(message: Message, db):
 
     items = await db.get_items_in_cart(message.from_user.id)
     if not items:
-        await message.answer("🛒 Корзина пуста", show_alert=True)
+        await message.answer("🛒 Корзина пуста")
         return
 
     builder = InlineKeyboardBuilder()
+
     text = "🛒 <b>Ваша корзина:</b>\n\n"
 
     for item in items:
@@ -93,9 +93,7 @@ async def checkout_confirmation(callback: CallbackQuery, db):
         await callback.answer("🛒 Ваша корзина пуста!", show_alert=True)
         return
 
-    total_price = 0.0
-    for item in items:
-        total_price += float(item['price']) * int(item['quantity'])
+    total_price, _ = calculate_cart_total(items)
 
     builder = InlineKeyboardBuilder()
     builder.button(text="🚀 Подтвердить оформление", callback_data="confirm_order")
@@ -109,17 +107,24 @@ async def checkout_confirmation(callback: CallbackQuery, db):
     )
 
 
+def calculate_cart_total(items):
+    total_price = 0.0
+    products_text = ""
+
+    for item in items:
+        item_total = float(item['price']) * int(item['quantity'])
+        total_price += item_total
+        products_text += f"• {item['title']} x{item['quantity']} ({item_total:.2f} BYN)\n"
+
+    return total_price, products_text.strip()
+
+
 @cart_router.callback_query(F.data == "confirm_order")
 async def accept_order(callback: CallbackQuery, db, bot: Bot):
     user_id = callback.from_user.id
     items = await db.get_items_in_cart(user_id)
 
-    products_text = ""
-    total_price = 0.0
-    for item in items:
-        item_total = item['price'] * item['quantity']
-        total_price += item_total
-        products_text += f"• {item['title']} x{item['quantity']} ({item_total:.2f} BYN)\n"
+    total_price, products_text = calculate_cart_total(items)
 
     await db.add_order(user_id, products_text, total_price)
     await db.add_total_price_and_order(total_price, user_id)
@@ -147,7 +152,6 @@ async def accept_order(callback: CallbackQuery, db, bot: Bot):
     )
 
     await bot.send_message(config.admin_id, text=admin_send, parse_mode="HTML")
-
 
 
 @cart_router.callback_query(F.data.startswith("buy_"))
