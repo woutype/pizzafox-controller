@@ -11,6 +11,8 @@ from databases.products import check_all_products
 
 dp = Dispatcher()
 
+# handle_ping и start_web_server были написаны с помощью искусственного интеллекта
+# Для того чтобы бот работал на Render
 
 async def handle_ping(request):
     return web.Response(text="The Bot is working! Everything’s great!", status=200)

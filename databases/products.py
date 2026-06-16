@@ -83,10 +83,13 @@ async def get_pizza(db):
 async def check_all_products(db):
     num = 60 * 60 * 24
     while True:
-        print("Начинаем заполнение базы данных...")
-        await get_pizza(db)
-        await get_desserts(db)
-        await get_drinks(db)
-        await get_snacks(db)
-        print("\n🎉 Все категории успешно импортированы в PostgreSQL!")
-        await asyncio.sleep(num)
+        try:
+            print("Начинаем заполнение базы данных...")
+            await get_pizza(db)
+            await get_desserts(db)
+            await get_drinks(db)
+            await get_snacks(db)
+            print("\n🎉 Все категории успешно импортированы в PostgreSQL!")
+            await asyncio.sleep(num)
+        except Exception as e:
+            print(f"Ошибка при обновлении товаров: {e}")
