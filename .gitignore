@@ -1,41 +1,5 @@
-# Секреты и конфигурация (КРИТИЧЕСКИ ВАЖНО)
+.idea
+.pytest_cache
+.venv
+__pycache__
 .env
-config.local.py
-
-# Виртуальное окружение
-venv/
-.venv/
-env/
-ENV/
-
-# Кэш Python и скомпилированные файлы
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.pytest_cache/
-.mypy_cache/
-
-# Настройки редакторов кода (IDE)
-.idea/
-.vscode/
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.swp
-*.swo
-
-# Системный мусор (Windows и macOS)
-Thumbs.db
-ehthumbs.db
-Desktop.ini
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-
-# Логи проекта
-*.log
-pip-log.txt
