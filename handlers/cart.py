@@ -1,3 +1,4 @@
+import asyncio
 import os.path
 
 from aiogram.types import CallbackQuery, Message, FSInputFile
@@ -142,7 +143,7 @@ async def accept_order(callback: CallbackQuery, db, bot: Bot):
     await callback.answer("Заказ подтвержден!")
 
     try:
-        pdf_file = generate_pdf(callback.from_user.id, items, total_price)
+        pdf_file = await asyncio.to_thread(generate_pdf, callback.from_user.id, items, total_price)
         document = FSInputFile(pdf_file)
         await callback.message.reply_document(document=document, caption="🧾 Ваш электронный чек")
 
