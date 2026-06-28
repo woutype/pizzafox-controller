@@ -1,27 +1,10 @@
 from aiogram.filters import Command
 from aiogram import Router, F
-from aiogram.types import (
-    ReplyKeyboardMarkup,
-    KeyboardButton,
-    Message,
-)
+from aiogram.types import Message
+
+from keyboards import get_main_reply_keyboard
 
 main_router = Router()
-
-
-async def get_main_reply_keyboard():
-    keyboard = ReplyKeyboardMarkup(
-        keyboard=[
-            [
-                KeyboardButton(text='🍕 Смотреть меню'), KeyboardButton(text='🧺 Корзина')
-            ],
-            [
-                KeyboardButton(text='👤 Профиль')
-            ]
-        ],
-        resize_keyboard=True
-    )
-    return keyboard
 
 
 @main_router.message(Command('start'))
@@ -30,8 +13,8 @@ async def start(message: Message, db):
     if user:
         await message.answer("С возвращением!")
     else:
-        await message.answer("Привет! Я тебя зарегистрировал.")
         await db.add_user(message.from_user.id, message.from_user.username, message.from_user.first_name)
+        await message.answer("Привет! Я тебя зарегистрировал.")
 
     welcome_text = (
         f"Привет, {message.from_user.first_name}! 👋\n"
@@ -44,12 +27,10 @@ async def start(message: Message, db):
 
 @main_router.message(F.text == "👤 Профиль")
 async def show_profile(message: Message, db):
-
     user = await db.get_user(message.from_user.id)
-    if user:
-        pass
-    else:
+    if not user:
         await db.add_user(message.from_user.id, message.from_user.username, message.from_user.first_name)
+        user = await db.get_user(message.from_user.id)
 
     name = user['first_name'] or "Гость"
     total_orders = user['total_orders'] or 0

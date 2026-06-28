@@ -37,6 +37,8 @@ def load_config():
         raise ValueError("Переменная DB_HOST не найдена в файле .env")
     if not database:
         raise ValueError("Переменная DB_DATABASE не найдена в файле .env")
+    if not port:
+        raise ValueError("Переменная DB_PORT не найдена в файле .env")
 
     return Config(
         bot_token=bot_token,
@@ -45,7 +47,8 @@ def load_config():
         password=password,
         host=host,
         database=database,
-        port=int(port))
+        port=int(port)
+    )
 
 
 config = load_config()

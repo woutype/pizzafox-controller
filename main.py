@@ -1,21 +1,19 @@
 import asyncio
 import os
+
 from aiohttp import web
 from aiogram import Bot, Dispatcher
+
 from config import config
-from handlers.start import main_router
-from handlers.menu import menu_router
-from handlers.cart import cart_router
-from databases.init_db import Database
-from databases.products import check_all_products
+from handlers import routers
+from database import Database
+from services.loader import check_all_products
 
 dp = Dispatcher()
 
-# handle_ping и start_web_server были написаны с помощью искусственного интеллекта
-# Для того чтобы бот работал на Render
 
 async def handle_ping(request):
-    return web.Response(text="The Bot is working! Everything’s great!", status=200)
+    return web.Response(text="The Bot is working! Everything's great!", status=200)
 
 
 async def start_web_server():
@@ -34,10 +32,12 @@ async def main():
     bot = Bot(token=config.bot_token)
     db = Database()
     await db.connect()
-    dp.include_router(main_router)
-    dp.include_router(menu_router)
-    dp.include_router(cart_router)
+
+    for router in routers:
+        dp.include_router(router)
+
     asyncio.create_task(check_all_products(db))
+
     if config.admin_id:
         try:
             await bot.send_message(chat_id=config.admin_id, text="Bot launched /start")

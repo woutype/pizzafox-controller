@@ -1,35 +1,15 @@
-from aiogram import Router
-from aiogram.types import (
-    InlineKeyboardButton,
-    InlineKeyboardMarkup,
-    Message,
-    CallbackQuery
-)
+from aiogram import Router, F
+from aiogram.types import Message, CallbackQuery
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from aiogram import F
+
+from keyboards import get_inline_category
 
 menu_router = Router()
 
 
-async def get_inline_category():
-    keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton(text="🍕 Пицца", callback_data="pizza")],
-            [InlineKeyboardButton(text="🍿 Закуски", callback_data="snacks")],
-            [InlineKeyboardButton(text="🥤 Напитки", callback_data="drinks")],
-            [InlineKeyboardButton(text="🍰 Десерты", callback_data="desserts")],
-        ]
-    )
-    return keyboard
-
-
 @menu_router.message(F.text == "🍕 Смотреть меню")
-async def menu(message: Message, db):
-
-    user = await db.get_user(message.from_user.id)
-    if user:
-        pass
-    else:
+async def show_menu(message: Message, db):
+    if not await db.get_user(message.from_user.id):
         await db.add_user(message.from_user.id, message.from_user.username, message.from_user.first_name)
 
     await message.answer(
@@ -39,9 +19,8 @@ async def menu(message: Message, db):
 
 
 @menu_router.callback_query(F.data.in_({"pizza", "snacks", "drinks", "desserts"}))
-async def menu(callback: CallbackQuery, db):
+async def show_category(callback: CallbackQuery, db):
     category = callback.data
-
     products = await db.get_products_by_category(category)
 
     if not products:
@@ -56,7 +35,6 @@ async def menu(callback: CallbackQuery, db):
         builder.button(text=button_text, callback_data=callback_data)
 
     builder.button(text="⬅️ Назад в категории", callback_data="back_to_categories")
-
     builder.adjust(1)
 
     await callback.message.edit_text(
@@ -69,7 +47,7 @@ async def menu(callback: CallbackQuery, db):
 @menu_router.callback_query(F.data.startswith("prod_"))
 async def show_product(callback: CallbackQuery, db):
     product_id = int(callback.data.split("_")[1])
-    item = await db.get_products(product_id=product_id)
+    item = await db.get_product(product_id=product_id)
 
     title = item['title']
     price = item['price']
@@ -85,10 +63,8 @@ async def show_product(callback: CallbackQuery, db):
     )
 
     builder = InlineKeyboardBuilder()
-
     builder.button(text="🛒 Добавить в корзину", callback_data=f"buy_{product_id}")
     builder.button(text="⬅️ Назад к списку", callback_data=category)
-
     builder.adjust(2)
 
     await callback.message.edit_text(

@@ -1,17 +1,55 @@
 import asyncio
-import os.path
+import os
 
 from aiogram.types import CallbackQuery, Message, FSInputFile
 from aiogram import F, Router, Bot
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+
 from handlers.pdf_creator import generate_pdf
 from config import config
 
 cart_router = Router()
 
 
+def calculate_cart_total(items):
+    total_price = 0.0
+    products_text = ""
+
+    for item in items:
+        item_total = float(item['price']) * int(item['quantity'])
+        total_price += item_total
+        products_text += f"• {item['title']} x{item['quantity']} ({item_total:.2f} BYN)\n"
+
+    return total_price, products_text.strip()
+
+
+@cart_router.message(F.text == "🧺 Корзина")
+async def show_cart(message: Message, db):
+    if not await db.get_user(message.from_user.id):
+        await db.add_user(message.from_user.id, message.from_user.username, message.from_user.first_name)
+
+    items = await db.get_items_in_cart(message.from_user.id)
+    if not items:
+        await message.answer("🛒 Корзина пуста")
+        return
+
+    builder = InlineKeyboardBuilder()
+    text = "🛒 <b>Ваша корзина:</b>\n\n"
+
+    for item in items:
+        builder.button(
+            text=f"❌ {item['title']} - {item['quantity']}",
+            callback_data=f"edit_{item['product_id']}"
+        )
+
+    builder.button(text="✅ Оформить", callback_data="checkout")
+    builder.adjust(1)
+
+    await message.answer(text=text, reply_markup=builder.as_markup(), parse_mode="HTML")
+
+
 @cart_router.callback_query(F.data == "open_cart")
-async def show_cart_callback(callback: CallbackQuery, db):
+async def open_cart_callback(callback: CallbackQuery, db):
     items = await db.get_items_in_cart(callback.from_user.id)
     if not items:
         await callback.message.answer("🛒 Корзина пуста")
@@ -29,37 +67,8 @@ async def show_cart_callback(callback: CallbackQuery, db):
     await callback.message.edit_text(text=text, reply_markup=builder.as_markup(), parse_mode="HTML")
 
 
-@cart_router.message(F.text == "🧺 Корзина")
-async def show_cart(message: Message, db):
-    user = await db.get_user(message.from_user.id)
-    if user:
-        pass
-    else:
-        await db.add_user(message.from_user.id, message.from_user.username, message.from_user.first_name)
-
-    items = await db.get_items_in_cart(message.from_user.id)
-    if not items:
-        await message.answer("🛒 Корзина пуста")
-        return
-
-    builder = InlineKeyboardBuilder()
-
-    text = "🛒 <b>Ваша корзина:</b>\n\n"
-
-    for item in items:
-        builder.button(
-            text=f"❌ {item['title']} - {item['quantity']}",
-            callback_data=f"edit_{item['product_id']}"
-        )
-
-    builder.button(text="✅ Оформить", callback_data="checkout")
-
-    builder.adjust(1)
-    await message.answer(text=text, reply_markup=builder.as_markup(), parse_mode="HTML")
-
-
 @cart_router.callback_query(F.data.startswith("edit_"))
-async def show_cart_callback(callback: CallbackQuery):
+async def edit_cart_item(callback: CallbackQuery):
     data = callback.data.split("_")
     if len(data) < 2 or not data[1].isdigit():
         await callback.answer("Ошибка данных!")
@@ -67,7 +76,6 @@ async def show_cart_callback(callback: CallbackQuery):
 
     product_id = int(data[1])
     builder = InlineKeyboardBuilder()
-
     builder.button(text="🗑 Удалить товар", callback_data=f"DelCard_{product_id}")
     builder.button(text="⬅️ Назад", callback_data="open_cart")
 
@@ -83,6 +91,7 @@ async def delete_card_from_cart(callback: CallbackQuery, db):
     product_id = callback.data.split("_")[1]
     builder = InlineKeyboardBuilder()
     builder.button(text="⬅️ Назад", callback_data="open_cart")
+
     await db.delete_item_from_cart(product_id, callback.from_user.id)
     await callback.message.edit_text("🎉 Ваш товар был успешно убран из корзины!", reply_markup=builder.as_markup())
 
@@ -108,18 +117,6 @@ async def checkout_confirmation(callback: CallbackQuery, db):
         reply_markup=builder.as_markup(),
         parse_mode="HTML"
     )
-
-
-def calculate_cart_total(items):
-    total_price = 0.0
-    products_text = ""
-
-    for item in items:
-        item_total = float(item['price']) * int(item['quantity'])
-        total_price += item_total
-        products_text += f"• {item['title']} x{item['quantity']} ({item_total:.2f} BYN)\n"
-
-    return total_price, products_text.strip()
 
 
 @cart_router.callback_query(F.data == "confirm_order")
@@ -154,7 +151,7 @@ async def accept_order(callback: CallbackQuery, db, bot: Bot):
         print(f"Ошибка при генерации или отправке PDF: {e}")
 
     username = f"@{callback.from_user.username}" if callback.from_user.username else "Нет юзернейма"
-    admin_send = (
+    admin_text = (
         "🚨 <b>У вас новый заказ!</b>\n"
         "━━━━━━━━━━━━━━━━━━━━━\n"
         f"👤 <b>Покупатель:</b> {callback.from_user.first_name} ({username})\n"
@@ -164,7 +161,7 @@ async def accept_order(callback: CallbackQuery, db, bot: Bot):
         f"💰 <b>Стоимость заказа: {total_price:.2f} BYN</b>"
     )
 
-    await bot.send_message(config.admin_id, text=admin_send, parse_mode="HTML")
+    await bot.send_message(config.admin_id, text=admin_text, parse_mode="HTML")
 
 
 @cart_router.callback_query(F.data.startswith("buy_"))
