@@ -12,6 +12,11 @@ class Database(UserCommands, ProductCommands, CartCommands, OrderCommands):
         super().__init__()
         self.pool = None
 
+    async def close(self):
+        if self.pool:
+            await self.pool.close()
+            print("✅ Пул соединений с БД закрыт")
+
     async def connect(self):
         self.pool = await asyncpg.create_pool(
             user=config.user,
@@ -62,6 +67,9 @@ class Database(UserCommands, ProductCommands, CartCommands, OrderCommands):
                     UNIQUE(user_id, product_id)
                 );
             """)
+            await conn.execute("CREATE INDEX IF NOT EXISTS idx_products_category ON products(category);")
+            await conn.execute("CREATE INDEX IF NOT EXISTS idx_cart_user_id ON cart(user_id);")
+            await conn.execute("CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders(user_id);")
 
     async def execute_transaction(self, func, *args):
         async with self.pool.acquire() as conn:

@@ -45,7 +45,12 @@ async def main():
             print(f"Failed to send startup message to admin: {e}")
 
     print("🤖 Bot started!")
-    await dp.start_polling(bot, db=db)
+    try:
+        await dp.start_polling(bot, db=db)
+    except Exception as e:
+        print(f"Failed to start polling: {e}")
+    finally:
+        await db.close()
 
 
 if __name__ == '__main__':

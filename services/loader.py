@@ -18,48 +18,45 @@ async def get_data(url):
 async def get_drinks(db):
     drinks_json = await get_data(url_drinks)
     drinks_data = drinks_json["response"]["data"]
+    products_to_add = []
 
     for item in drinks_data:
-        product_id = item["id"]
-        title = item["title_inner"]
-        price = item["price"] / 10000
-        description = item["producer_country"]
-        image_url = item["photo_small"]
-        category = "drinks"
+        products_to_add.append((
+            item["id"], item["title_inner"], item["price"] / 10000,
+            item["producer_country"], item["photo_small"], "drinks"
+        ))
 
-        await db.add_product(product_id, title, price, description, image_url, category)
+    await db.add_products_bulk(products_to_add)
     print("✅ Напитки загружены!")
 
 
 async def get_desserts(db):
     desserts_json = await get_data(url_desserts)
     desserts_data = desserts_json["response"]["data"]
+    products_to_add = []
 
     for item in desserts_data:
-        product_id = item["id"]
-        title = item["title"]
-        price = item["price"] / 10000
-        description = item["amount"]
-        image_url = item["photo_small"]
-        category = "desserts"
+        products_to_add.append((
+            item["id"], item["title"], item["price"] / 10000,
+            item["amount"], item["photo_small"], "desserts"
+        ))
 
-        await db.add_product(product_id, title, price, description, image_url, category)
+    await db.add_products_bulk(products_to_add)
     print("✅ Десерты загружены!")
 
 
 async def get_snacks(db):
     snacks_json = await get_data(url_snacks)
     snacks_data = snacks_json["response"]["data"]
+    products_to_add = []
 
     for item in snacks_data:
-        product_id = item["id"]
-        title = item["title"]
-        price = item["big_price"] / 10000
-        description = item["anonce"] + " " + item["big_amount"]
-        image_url = item["photo_small"]
-        category = "snacks"
+        products_to_add.append((
+            item["id"], item["title"], item["big_price"] / 10000,
+            item["anonce"] + " " + item["big_amount"], item["photo_small"], "snacks"
+        ))
 
-        await db.add_product(product_id, title, price, description, image_url, category)
+    await db.add_products_bulk(products_to_add)
     print("✅ Закуски загружены!")
 
 
@@ -79,7 +76,7 @@ async def get_pizza(db):
 
         products_to_add.append((product_id, title, price, description, image_url, category))
 
-    await db.add_product_bulk(products_to_add)
+    await db.add_products_bulk(products_to_add)
     print("✅ Пиццы загружены!")
 
 
