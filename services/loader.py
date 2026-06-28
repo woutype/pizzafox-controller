@@ -67,6 +67,8 @@ async def get_pizza(db):
     pizza_json = await get_data(url_pizza)
     pizza_data = pizza_json["response"]["data"]
 
+    products_to_add = []
+
     for item in pizza_data:
         product_id = item["id"]
         title = item["title"]
@@ -75,7 +77,9 @@ async def get_pizza(db):
         image_url = item["photo_small"]
         category = "pizza"
 
-        await db.add_product(product_id, title, price, description, image_url, category)
+        products_to_add.append((product_id, title, price, description, image_url, category))
+
+    await db.add_product_bulk(products_to_add)
     print("✅ Пиццы загружены!")
 
 

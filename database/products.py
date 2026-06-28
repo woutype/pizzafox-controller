@@ -2,9 +2,9 @@ class ProductCommands:
     def __init__(self):
         self.pool = None
 
-    async def add_product(self, product_id, title, price, description, image_url, category):
+    async def add_products_bulk(self, products_data):
         async with self.pool.acquire() as conn:
-            await conn.execute("""
+            await conn.executemany("""
                 INSERT INTO products (product_id, title, price, description, image_url, category)
                 VALUES ($1, $2, $3, $4, $5, $6)
                 ON CONFLICT (product_id)
@@ -14,12 +14,7 @@ class ProductCommands:
                     description = EXCLUDED.description,
                     image_url = EXCLUDED.image_url,
                     category = EXCLUDED.category;
-            """, product_id, title, price, description, image_url, category)
-
-            await conn.execute(
-                "DELETE FROM products WHERE product_id = $1 AND price < 0.1;",
-                product_id
-            )
+            """, products_data)
 
     async def get_product(self, product_id):
         async with self.pool.acquire() as conn:
