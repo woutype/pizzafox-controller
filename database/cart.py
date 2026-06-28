@@ -35,9 +35,8 @@ class CartCommands:
                 WHERE user_id = $1 AND product_id = $2 AND quantity <= 0;
             """, int(user_id), int(product_id))
 
-    async def clear_cart(self, user_id):
-        async with self.pool.acquire() as conn:
-            await conn.execute(
-                "DELETE FROM cart WHERE user_id = $1;",
-                int(user_id)
-            )
+    @staticmethod
+    async def clear_cart_transactional(conn, user_id):
+        await conn.execute(
+            "DELETE FROM cart WHERE user_id = $1;",
+            int(user_id))

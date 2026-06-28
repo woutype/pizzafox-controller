@@ -62,3 +62,8 @@ class Database(UserCommands, ProductCommands, CartCommands, OrderCommands):
                     UNIQUE(user_id, product_id)
                 );
             """)
+
+    async def execute_transaction(self, func, *args):
+        async with self.pool.acquire() as conn:
+                async with conn.transaction():
+                    return await func(conn, *args)

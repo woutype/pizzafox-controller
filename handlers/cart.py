@@ -125,9 +125,12 @@ async def accept_order(callback: CallbackQuery, db, bot: Bot):
     items = await db.get_items_in_cart(user_id)
     total_price, products_text = calculate_cart_total(items)
 
-    await db.add_order(user_id, products_text, total_price)
-    await db.add_total_price_and_order(total_price, user_id)
-    await db.clear_cart(user_id)
+    async def transaction_logic(conn):
+        await db.add_order_transactional(conn, user_id, products_text, total_price)
+        await db.add_total_price_and_order_transactional(conn, total_price, user_id)
+        await db.clear_cart_transactional(conn, user_id)
+
+    await db.execute_transaction(transaction_logic)
 
     success_text = (
         "🎉 <b>Заказ успешно оформлен!</b>\n\n"
