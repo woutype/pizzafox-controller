@@ -7,16 +7,15 @@ url_snacks = "https://pzz.by/api/v1/snacks?load=modifications&filter=meal_only:0
 url_pizza = "https://pzz.by/api/v1/pizzas?load=ingredients,modifications,filters&filter=meal_only:0,parent_id:is:null&order=position:asc"
 
 
-async def get_data(url):
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url) as resp:
-            if resp.status == 404:
-                return None
-            return await resp.json()
+async def get_data(url, session):
+    async with session.get(url) as resp:
+        if resp.status == 404:
+            return None
+        return await resp.json()
 
 
-async def get_drinks(db):
-    drinks_json = await get_data(url_drinks)
+async def get_drinks(db, session):
+    drinks_json = await get_data(url_drinks, session)
     drinks_data = drinks_json["response"]["data"]
     products_to_add = []
 
@@ -30,8 +29,8 @@ async def get_drinks(db):
     print("✅ Напитки загружены!")
 
 
-async def get_desserts(db):
-    desserts_json = await get_data(url_desserts)
+async def get_desserts(db, session):
+    desserts_json = await get_data(url_desserts, session)
     desserts_data = desserts_json["response"]["data"]
     products_to_add = []
 
@@ -45,8 +44,8 @@ async def get_desserts(db):
     print("✅ Десерты загружены!")
 
 
-async def get_snacks(db):
-    snacks_json = await get_data(url_snacks)
+async def get_snacks(db, session):
+    snacks_json = await get_data(url_snacks, session)
     snacks_data = snacks_json["response"]["data"]
     products_to_add = []
 
@@ -60,8 +59,8 @@ async def get_snacks(db):
     print("✅ Закуски загружены!")
 
 
-async def get_pizza(db):
-    pizza_json = await get_data(url_pizza)
+async def get_pizza(db, session):
+    pizza_json = await get_data(url_pizza, session)
     pizza_data = pizza_json["response"]["data"]
 
     products_to_add = []
@@ -82,15 +81,18 @@ async def get_pizza(db):
 
 async def check_all_products(db):
     interval = 60 * 60 * 24
-    while True:
-        try:
-            print("Начинаем заполнение базы данных...")
-            await get_pizza(db)
-            await get_desserts(db)
-            await get_drinks(db)
-            await get_snacks(db)
-            print("\n🎉 Все категории успешно импортированы в PostgreSQL!")
-            await asyncio.sleep(interval)
-        except Exception as e:
-            print(f"Ошибка при обновлении товаров: {e}")
-            await asyncio.sleep(60 * 5)
+    async with aiohttp.ClientSession() as session:
+        while True:
+            try:
+                    print("Начинаем заполнение базы данных...")
+                    await asyncio.gather(
+                        get_pizza(db, session),
+                        get_drinks(db, session),
+                        get_desserts(db, session),
+                        get_snacks(db, session)
+                    )
+                    print("\n🎉 Все категории успешно импортированы в PostgreSQL!")
+                    await asyncio.sleep(interval)
+            except Exception as e:
+                print(f"Ошибка при обновлении товаров: {e}")
+                await asyncio.sleep(60 * 60)
